@@ -36,7 +36,7 @@ trait StorageInterface[SM <: FileMetadata] extends ResultProcessors {
    */
   def system(): String
 
-  def uploadFile(source: UploadableFile, bucket: String, path: String): Either[UploadError, String]
+  def uploadFile(source: UploadableFile, bucket: String, path: Int => String, allowOverwrite: Boolean ): Either[UploadError, String]
 
   def close(): Unit
 

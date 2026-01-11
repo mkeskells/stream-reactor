@@ -68,18 +68,22 @@ class GCPStorageStorageInterface(
                                   extensionFilter:      Option[ExtensionFilter],
 ) extends StorageInterface[GCPStorageFileMetadata]
     with LazyLogging {
-  override def uploadFile(source: UploadableFile, bucket: String, path: String): Either[UploadError, String] = {
+  override def uploadFile(source: UploadableFile, bucket: String, path: Int => String, allowOverwrite: Boolean): Either[UploadError, String] = {
     logger.debug(s"[{}] GCP Uploading file from local {} to Storage {}:{}", connectorTaskId.show, source, bucket, path)
     for {
       file <- source.validate.toEither
       eTag <- Try {
-        val blobId   = BlobId.of(bucket, path)
-        val blobInfo = BlobInfo.newBuilder(blobId).setMetadata(xx).build()
+        var attempt = 1
+        while ()
+        val blobId   = BlobId.of(bucket, path(attempt))
+        val blobInfo = BlobInfo.newBuilder(blobId).build()
         val blob =
           if (avoidResumableUpload) {
-            storage.create(blobInfo, Files.readAllBytes(file.toPath), BlobTargetOption.doesNotExist())
+            val options = if (allowOverwrite) Seq.empty else Seq(BlobTargetOption.doesNotExist())
+            storage.create(blobInfo, Files.readAllBytes(file.toPath), options : _*)
           } else {
-            storage.createFrom(blobInfo, file.toPath, BlobWriteOption.doesNotExist())
+            val options = if (allowOverwrite) Seq.empty else Seq(BlobWriteOption.doesNotExist())
+            storage.createFrom(blobInfo, file.toPath, options : _*)
           }
         logger.debug(s"[{}] Completed upload from local {} to Storage {}:{}",
                      connectorTaskId.show,
