@@ -46,7 +46,7 @@ class GCPStorageSourceTask
   ): GCPStorageStorageInterface =
     new GCPStorageStorageInterface(connectorTaskId,
                                    storage             = client,
-                                   avoidReumableUpload = false,
+                                   avoidResumableUpload = false,
                                    extensionFilter     = config.extensionFilter,
     )
 

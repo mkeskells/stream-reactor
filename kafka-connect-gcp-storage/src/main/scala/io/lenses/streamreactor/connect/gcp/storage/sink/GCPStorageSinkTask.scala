@@ -52,9 +52,9 @@ class GCPStorageSinkTask
     cloudClient:     Storage,
   ): StorageInterface[GCPStorageFileMetadata] =
     new GCPStorageStorageInterface(connectorTaskId,
-                                   storage             = cloudClient,
-                                   avoidReumableUpload = config.avoidResumableUpload,
-                                   extensionFilter     = Option.empty,
+                                   storage              = cloudClient,
+                                   avoidResumableUpload = config.avoidResumableUpload,
+                                   extensionFilter      = Option.empty,
     )
 
   override def convertPropsToConfig(

@@ -23,9 +23,7 @@ import com.google.cloud.storage.Blob
 import com.google.cloud.storage.BlobId
 import com.google.cloud.storage.BlobInfo
 import com.google.cloud.storage.Storage
-import com.google.cloud.storage.Storage.BlobListOption
-import com.google.cloud.storage.Storage.BlobSourceOption
-import com.google.cloud.storage.Storage.BlobTargetOption
+import com.google.cloud.storage.Storage.{BlobListOption, BlobSourceOption, BlobTargetOption, BlobWriteOption}
 import com.google.cloud.storage.StorageException
 import com.typesafe.scalalogging.LazyLogging
 import io.circe.Encoder
@@ -64,10 +62,10 @@ import scala.util.Success
 import scala.util.Try
 
 class GCPStorageStorageInterface(
-  connectorTaskId:     ConnectorTaskId,
-  storage:             Storage,
-  avoidReumableUpload: Boolean,
-  extensionFilter:     Option[ExtensionFilter],
+                                  connectorTaskId:      ConnectorTaskId,
+                                  storage:              Storage,
+                                  avoidResumableUpload: Boolean,
+                                  extensionFilter:      Option[ExtensionFilter],
 ) extends StorageInterface[GCPStorageFileMetadata]
     with LazyLogging {
   override def uploadFile(source: UploadableFile, bucket: String, path: String): Either[UploadError, String] = {
@@ -76,12 +74,12 @@ class GCPStorageStorageInterface(
       file <- source.validate.toEither
       eTag <- Try {
         val blobId   = BlobId.of(bucket, path)
-        val blobInfo = BlobInfo.newBuilder(blobId).build()
+        val blobInfo = BlobInfo.newBuilder(blobId).setMetadata(xx).build()
         val blob =
-          if (avoidReumableUpload) {
-            storage.create(blobInfo, Files.readAllBytes(file.toPath))
+          if (avoidResumableUpload) {
+            storage.create(blobInfo, Files.readAllBytes(file.toPath), BlobTargetOption.doesNotExist())
           } else {
-            storage.createFrom(blobInfo, file.toPath)
+            storage.createFrom(blobInfo, file.toPath, BlobWriteOption.doesNotExist())
           }
         logger.debug(s"[{}] Completed upload from local {} to Storage {}:{}",
                      connectorTaskId.show,
